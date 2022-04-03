@@ -1,49 +1,41 @@
 ﻿using System;
-using Staty.Utils;
-using Staty.Writers;
+using System.Runtime.InteropServices;
+using Autofac;
 
 namespace Staty
 {
     internal class Program
     {
+        private static readonly IContainer Container = RegisterDependency.Register(new ContainerBuilder());
+
         static void Main(string[] args)
         {
-            Console.SetWindowSize(GetWindowWidth(), 40);
-            Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
-            Console.ForegroundColor = ConsoleColor.White;                       //defaultně není text v konzoli bílý, ale je to nějaká hodně málo šeděbílá
-            Paginator paginator = new Paginator();
-            Orderers.NameOrder();   //Dokáže rozpoznat a zařadit i CH na správné místo po H
-            bool running = true;
-            do
+            var handle = GetConsoleWindow();
+            if (handle != IntPtr.Zero)
             {
-                paginator.WriteItemsFromRange();
-                switch (Console.ReadKey(true).Key)
-                {
-                    case ConsoleKey.PageUp: paginator.NextPage(); break;
-                    case ConsoleKey.PageDown: paginator.PrevPage(); break;
-                    case ConsoleKey.Backspace: running = false; break;
-                    case ConsoleKey.Escape: Filters.ResetAllFilters(); break;
-                    case ConsoleKey.F1: HelpWriter.WriteHelp(); break;
-                    case ConsoleKey.F2: Filters.ContinentFilter(); break;
-                    case ConsoleKey.F3: Filters.NameFilter(); break;
-                    case ConsoleKey.F5: Orderers.NameOrder(); break;
-                    case ConsoleKey.F6: Orderers.AreaOrder(); break;
-                    case ConsoleKey.F7: Orderers.PopulationOrder(); break;
-                }
-
-            } while (running);
-        }
-
-        private static int GetWindowWidth()                     //Vrací potřebnou velikost okna, podle velikosti všech zarovnání
-        {
-            int width = 0;
-
-            for (int i = 0; i < UiWriter.alignNumber.Length; i++)
-            {
-                width += UiWriter.alignNumber[i];
+                //odstranění resize okna konzole
+                var sysMenu = GetSystemMenu(handle, false);
+                DeleteMenu(sysMenu, 0xF000, 0x0);
             }
 
-            return width*-1 + 1;
+            using (var scope = Container.BeginLifetimeScope())
+            {
+                var app = scope.Resolve<App>();
+                app.Run();
+            }
         }
+
+        #region Native Mehods
+
+        [DllImport("user32.dll")]
+        public static extern int DeleteMenu(IntPtr hMenu, int nPosition, int wFlags);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        private static extern IntPtr GetConsoleWindow();
+
+        #endregion
     }
 }
