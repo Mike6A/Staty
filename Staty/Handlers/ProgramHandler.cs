@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using Staty.Data;
 using Staty.Services;
 using Staty.Utils;
@@ -26,7 +27,7 @@ namespace Staty.Handlers
         /// <summary>
         /// S uchování předchozího směru seřazení
         /// </summary>
-        public void OrderStatesBy(Func<State, object> selector) => _dataHandler.OrderStatesBy(selector);
+        public void OrderStatesBy(Expression<Func<State, object>> selector) => _dataHandler.OrderStatesBy(selector);
 
         public void NextPage() => _pager.NextPage();
 
